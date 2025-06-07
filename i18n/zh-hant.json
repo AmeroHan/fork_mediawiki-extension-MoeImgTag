@@ -1,0 +1,8 @@
+{
+  "imgtag-desc": "允許在高版本 MediaWiki 中安全地插入 <code>&lt;img&gt;</code> 標籤。",
+  "imgtag-invalid": "插入 <code>&lt;img&gt;</code> 時出現問題{{#if: $1 |：$1 | 請檢查參數。 }}",
+  "imgtag-empty-src": "未設定 <code>src</code> 屬性。",
+  "imgtag-invalid-src": "無效的 <code>src</code> 屬性",
+  "imgtag-not-whitelisted-src": "該 <code>src</code> 屬性未被列入白名單。",
+  "imgtag-blacklisted-src": "該 <code>src</code> 屬性被列入黑名單。"
+}

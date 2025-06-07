@@ -1,0 +1,44 @@
+{
+  "name": "MoeImgTag",
+  "author": [
+    "[https://github.com/dragon-fish dragon-fish]"
+  ],
+  "url": "",
+  "descriptionmsg": "imgtag-desc",
+  "version": "0.0.1",
+  "license-name": "",
+  "type": "parserhook",
+  "AutoloadClasses": {
+    "Moegirl\\ImgTag\\Hooks": "includes/Hooks.php",
+    "Moegirl\\ImgTag\\Renderer": "includes/Renderer.php"
+  },
+  "HookHandlers": {
+    "main": {
+      "class": "Moegirl\\ImgTag\\Hooks"
+    }
+  },
+  "Hooks": {
+    "ParserFirstCallInit": "main",
+    "ParserBeforeStrip": "main"
+  },
+  "MessagesDirs": {
+    "MoeImgTag": [
+      "i18n"
+    ]
+  },
+  "config": {
+    "MoeImgTagWhitelist": {
+      "descriptionmsg": "config-desc-addimgtagwhitelist",
+      "value": []
+    },
+    "MoeImgTagBlacklist": {
+      "descriptionmsg": "config-desc-addimgtagblacklist",
+      "value": []
+    },
+    "MoeImgTagFixSelfClosing": {
+      "descriptionmsg": "config-desc-enable-self-closing",
+      "value": false
+    }
+  },
+  "manifest_version": 2
+}
