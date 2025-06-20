@@ -2,12 +2,12 @@
 
 namespace Moegirl\ImgTag;
 
-use Html;
+use MediaWiki\Html\Html;
 use MediaWiki\MediaWikiServices;
-use Parser;
-use PPFrame;
-use Sanitizer;
-use Status;
+use MediaWiki\Status\Status;
+use MediaWiki\Parser\Parser;
+use MediaWiki\Parser\PPFrame;
+use MediaWiki\Parser\Sanitizer;
 
 class Renderer {
   const IMG_SELF_CLOSING_MARK = 'data-img-unsafe-self-closing';

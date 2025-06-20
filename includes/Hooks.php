@@ -2,11 +2,11 @@
 
 namespace Moegirl\ImgTag;
 
-use MediaWiki\Hook\ParserBeforeStripHook;
+use MediaWiki\Hook\ParserBeforeInternalParseHook;
 use MediaWiki\Hook\ParserFirstCallInitHook;
 use MediaWiki\MediaWikiServices;
 
-class Hooks implements ParserFirstCallInitHook, ParserBeforeStripHook {
+class Hooks implements ParserFirstCallInitHook, ParserBeforeInternalParseHook {
   public function onParserFirstCallInit($parser) {
     $parser->setHook('img', [Renderer::class, 'renderImgTag']);
   }
@@ -15,7 +15,7 @@ class Hooks implements ParserFirstCallInitHook, ParserBeforeStripHook {
    * 曲线救国：尝试修复 <img ...> 标签的自闭合问题
    * <img ...> → <img ... />
    */
-  public function onParserBeforeStrip($parser, &$text, $state) {
+  public function onParserBeforeInternalParse($parser, &$text, $stripState) {
     $conf = MediaWikiServices::getInstance()->getMainConfig();
     if (!$conf->get('MoeImgTagFixSelfClosing')) {
       return true; // 如果配置未开启，则不进行处理
