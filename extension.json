@@ -5,7 +5,7 @@
   ],
   "url": "https://zh.moegirl.org.cn/_?curid=1218",
   "descriptionmsg": "imgtag-desc",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "license-name": "",
   "type": "parserhook",
   "AutoloadNamespaces": {
@@ -24,6 +24,9 @@
     "MoeImgTag": [
       "i18n"
     ]
+  },
+  "ExtensionMessagesFiles": {
+    "MoeImgTagAlias": "MoeImgTag.i18n.php"
   },
   "config": {
     "MoeImgTagWhitelist": {

@@ -9,6 +9,7 @@ use MediaWiki\MediaWikiServices;
 class Hooks implements ParserFirstCallInitHook, ParserBeforeInternalParseHook {
   public function onParserFirstCallInit($parser) {
     $parser->setHook('img', [Renderer::class, 'renderImgTag']);
+    $parser->setFunctionHook('img', [Renderer::class, 'renderImgFunction']);
   }
 
   /**

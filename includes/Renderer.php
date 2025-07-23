@@ -44,6 +44,10 @@ class Renderer {
       $src = str_replace('&#58;//', '://', $src);
     }
 
+    if (empty($src)) {
+      return ''; // 如果 src 仍然为空，则不渲染 img 标签
+    }
+
     $srcValidationStatus = self::validateSrc($src);
     if (!$srcValidationStatus->isGood()) {
       $givenSrc = isset($args['src']) ? $args['src'] : '';
@@ -57,35 +61,84 @@ class Renderer {
       );
     }
 
-    $class = Sanitizer::escapeClass($class);
-    $style = Sanitizer::checkCss($style);
-
     // 暂时不做支持
     unset($args['srcset']);
 
-    $attrs = array_merge($args, [
+    $attribs = array_merge($args, [
       'src' => $src,
-      'style' => $style,
-      'class' => $class,
-      'data-input' => $input,
+      'style' => $style ?? '',
+      'class' => $class ?? '',
     ]);
-    $attrs = Sanitizer::validateTagAttributes($attrs, 'img');
+    $attribs = Sanitizer::validateTagAttributes($attribs, 'img');
 
     // 如果没有设置 loading 属性，则默认为 lazy
     if (isset($args['loading']) && $args['loading'] === 'eager') {
-      $attrs['loading'] = 'eager';
+      $attribs['loading'] = 'eager';
     } else {
-      $attrs['loading'] = 'lazy';
+      $attribs['loading'] = 'lazy';
     }
 
     // 添加额外属性方便维护
-    $attrs['class'] .= ' moe-img-tag';
+    $attribs['class'] .= ' moe-img-hook';
 
     return Html::rawElement(
       'img',
-      $attrs,
+      $attribs,
       ''
     );
+  }
+
+  public static function renderImgFunction(Parser $parser, ...$args): string|array {
+    $options = self::extractParserFunctionOptions($args);
+    $src = $options['src'] ?? $args[0] ?? '';
+    if (empty($src)) {
+      return '';
+    }
+
+    $srcValidationStatus = self::validateSrc($src);
+    if (!$srcValidationStatus->isGood()) {
+      return Html::rawElement(
+        'span',
+        ['class' => 'error'],
+        wfMessage('imgtag-invalid', $srcValidationStatus->getMessage()->text())->text()
+      );
+    }
+
+    $attribs = array_merge($options, [
+      'src' => $src,
+      'style' => $options['style'] ?? '',
+      'class' => $options['class'] ?? '',
+    ]);
+    $attribs = Sanitizer::validateTagAttributes($attribs, 'img');
+
+    // 如果没有设置 loading 属性，则默认为 lazy
+    if (isset($options['loading']) && $options['loading'] === 'eager') {
+      $attribs['loading'] = 'eager';
+    } else {
+      $attribs['loading'] = 'lazy';
+    }
+
+    // 添加额外属性方便维护
+    $attribs['class'] .= ' moe-img-function';
+
+    return [
+      'text' => Html::element('img', $attribs),
+      'isHTML' => true,
+    ];
+  }
+
+  private static function extractParserFunctionOptions(array $options): array {
+    $results = [];
+    foreach ($options as $option) {
+      $pair = array_map('trim', explode('=', $option, 2));
+      if (count($pair) === 2) {
+        $results[$pair[0]] = $pair[1];
+      }
+      if (count($pair) === 1) {
+        $results[$pair[0]] = true;
+      }
+    }
+    return $results;
   }
 
   public static function validateSrc($src = '') {
