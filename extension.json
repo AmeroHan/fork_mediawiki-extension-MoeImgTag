@@ -3,10 +3,10 @@
   "author": [
     "[https://github.com/dragon-fish dragon-fish]"
   ],
-  "url": "https://zh.moegirl.org.cn/_?curid=1218",
+  "url": "https://github.com/moegirlwiki/mediawiki-extension-MoeImgTag",
   "descriptionmsg": "imgtag-desc",
-  "version": "0.0.2",
-  "license-name": "",
+  "version": "1.0.0",
+  "license-name": "MIT",
   "type": "parserhook",
   "AutoloadNamespaces": {
     "Moegirl\\ImgTag\\": "includes/"

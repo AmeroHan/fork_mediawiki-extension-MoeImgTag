@@ -8,6 +8,56 @@
 wfLoadExtension( 'MoeImgTag' );
 ```
 
+## 使用方法
+
+### 扩展标签
+
+```html
+<!-- 最小可用的示例 -->
+<img src="https://example.com/image.jpg" />
+
+<!-- 更多可用的属性 -->
+<img
+  src="https://example.com/image.jpg"
+  class="my-class"
+  style="width: 100%; height: auto;"
+  loading="lazy"
+  title="My Image"
+  alt="My Image"
+  width="400"
+  height="300"
+/>
+```
+
+> [!IMPORTANT]
+> img 标签必须被正确闭合：`/>`
+
+这种用法可以简单的在文章内嵌入行内外部图片。
+
+但需注意，任何参数都会被当做纯文本解析，即你无法在参数中使用解析器函数或模板调用。如有需要，请使用解析器函数。
+
+### 解析器函数
+
+```plaintext
+{{ #img: https://example.com/image.jpg }}
+```
+
+> 该函数可以认为是 `{{ #tag: img | src = https://example.com/image.jpg }}` 的语法糖。
+
+你可以在参数中使用解析器函数或模板调用，例如：
+
+```plaintext
+{{ #img: {{ filepath: {{{1}}} }}
+  | class = my-class {{{className|}}}
+  | style = width: 100%; height: auto; {{{style|}}}
+  | loading = {{{loading|lazy}}}
+  | title = {{{title|}}}
+  | alt = {{{alt|}}}
+  | width = {{{width|}}}
+  | height = {{{height|}}}
+}}
+```
+
 ## 配置项
 
 ### 黑名单&白名单
@@ -29,7 +79,8 @@ $wgMoeImgTagBlacklist = [
 
 匹配的规则可以参考 [Renderer::checkUrlMatch](./includes/Renderer.php) 的实现。
 
-提示：设置白名单的时候，别忘了把本站域名加上，最简单的方式是：
+> [!TIP]
+> 设置白名单的时候，别忘了把本站域名加上，最简单的方式是：
 
 ```php
 $wgMoeImgTagWhitelist = [
@@ -38,7 +89,7 @@ $wgMoeImgTagWhitelist = [
 ];
 ```
 
-### 修复自闭合标签
+### 修复自闭合标签 (实验性)
 
 ```php
 $wgMoeImgTagFixSelfClosing = true;
