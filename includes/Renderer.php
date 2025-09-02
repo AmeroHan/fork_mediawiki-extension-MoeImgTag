@@ -12,9 +12,63 @@ use MediaWiki\Parser\Sanitizer;
 class Renderer {
   const IMG_SELF_CLOSING_MARK = 'data-img-unsafe-self-closing';
 
+  public static function createImgElement(array $attribs = []) {
+    $src = $attribs['src'] ?? '';
+
+    // {{filepath:xxx|nowiki}} 可能会给出一个奇怪的 url，我们简单地处理一下
+    if (strpos($src, '&#58;//') !== false) {
+      // 替换 &#58; 为 :
+      $src = str_replace('&#58;//', '://', $src);
+    }
+    // 如果开头是 //，我们补全协议
+    if (strpos($src, '//') === 0) {
+      $src = "https:$src";
+    }
+
+    if (empty($src)) {
+      return ['', 'isHTML' => true];
+    }
+
+    $srcValidationStatus = self::validateSrc($src);
+    if (!$srcValidationStatus->isGood()) {
+      return [
+        Html::rawElement(
+          'span',
+          [
+            'class' => 'error moe-img-error',
+            'data-src-input' => $src,
+          ],
+          $srcValidationStatus->getMessage()->text()
+        ),
+        'isError' => true,
+        'isHTML' => true,
+      ];
+    }
+
+    $attribs = array_merge($attribs, [
+      'src' => $src,
+      'style' => $attribs['style'] ?? '',
+      'class' => $attribs['class'] ?? '',
+    ]);
+    $attribs = Sanitizer::validateTagAttributes($attribs, 'img');
+
+    // 如果没有设置 loading 属性，则默认为 lazy
+    if (isset($attribs['loading']) && $attribs['loading'] === 'eager') {
+      $attribs['loading'] = 'eager';
+    } else {
+      $attribs['loading'] = 'lazy';
+    }
+
+    $html = Html::element('img', $attribs);
+
+    return [
+      $html,
+      'isHTML' => true,
+    ];
+  }
+
   public static function renderImgTag($input, array $args, Parser $parser, PPFrame $ppframe) {
     $src = isset($args['src']) ? trim($args['src']) : '';
-    $style = isset($args['style']) ? $args['style'] : '';
     $class = isset($args['class']) ? $args['class'] : '';
 
     // 在某些极其抽象的使用场景下，src 会出现在 $input 中
@@ -24,68 +78,19 @@ class Renderer {
       $src = trim($input);
     }
 
-    // 如果 src 包含 {，则认为有可能包含模板或其他预处理内容，需要交给 Parser 处理
-    // 例如：{{filepath:xxx|nowiki}} 或 /path/to/image/{{PAGENAME}}.png
-    if (strpos($src, '{{') !== false) {
-      $parsed = $parser->recursivePreprocess($src, $ppframe);
-      // wiki 可能开启了图片链接自动渲染为 <img> 标签，我们得从中提取出 src
-      if (strpos($parsed, '<img') === 0) {
-        // 使用正则表达式提取 src 属性
-        if (preg_match('/src=["\']?([^"\'>]+)["\']?/', $parsed, $matches)) {
-          $parsed = $matches[1] ?? '';
-        }
-      }
-      $src = $parsed;
-    }
-
-    // {{filepath:xxx|nowiki}} 可能会给出一个奇怪的 url，我们简单地处理一下
-    if (strpos($src, '&#58;//') !== false) {
-      // 替换 &#58; 为 :
-      $src = str_replace('&#58;//', '://', $src);
-    }
-
     if (empty($src)) {
       return ''; // 如果 src 仍然为空，则不渲染 img 标签
     }
 
-    $srcValidationStatus = self::validateSrc($src);
-    if (!$srcValidationStatus->isGood()) {
-      $givenSrc = isset($args['src']) ? $args['src'] : '';
-      return Html::rawElement(
-        'span',
-        [
-          'class' => 'error',
-          'title' => "given src: {$givenSrc}\nparsed src: {$src}\ninput: {$input}",
-        ],
-        wfMessage('imgtag-invalid', $srcValidationStatus->getMessage()->text())->text()
-      );
-    }
-
-    // 暂时不做支持
-    unset($args['srcset']);
-
     $attribs = array_merge($args, [
       'src' => $src,
-      'style' => $style ?? '',
       'class' => $class ?? '',
     ]);
-    $attribs = Sanitizer::validateTagAttributes($attribs, 'img');
-
-    // 如果没有设置 loading 属性，则默认为 lazy
-    if (isset($args['loading']) && $args['loading'] === 'eager') {
-      $attribs['loading'] = 'eager';
-    } else {
-      $attribs['loading'] = 'lazy';
-    }
 
     // 添加额外属性方便维护
     $attribs['class'] .= ' moe-img-hook';
 
-    return Html::rawElement(
-      'img',
-      $attribs,
-      ''
-    );
+    return self::createImgElement($attribs);
   }
 
   public static function renderImgFunction(Parser $parser, ...$args): string|array {
@@ -95,36 +100,22 @@ class Renderer {
       return '';
     }
 
-    $srcValidationStatus = self::validateSrc($src);
-    if (!$srcValidationStatus->isGood()) {
-      return Html::rawElement(
-        'span',
-        ['class' => 'error'],
-        wfMessage('imgtag-invalid', $srcValidationStatus->getMessage()->text())->text()
-      );
-    }
-
     $attribs = array_merge($options, [
       'src' => $src,
-      'style' => $options['style'] ?? '',
       'class' => $options['class'] ?? '',
     ]);
-    $attribs = Sanitizer::validateTagAttributes($attribs, 'img');
-
-    // 如果没有设置 loading 属性，则默认为 lazy
-    if (isset($options['loading']) && $options['loading'] === 'eager') {
-      $attribs['loading'] = 'eager';
-    } else {
-      $attribs['loading'] = 'lazy';
-    }
 
     // 添加额外属性方便维护
     $attribs['class'] .= ' moe-img-function';
 
-    return [
-      'text' => Html::element('img', $attribs),
-      'isHTML' => true,
-    ];
+    switch ($parser->getOutputType()) {
+      case Parser::OT_WIKI:
+        return $attribs['src'];
+      case Parser::OT_PLAIN:
+        return [$attribs['src'], 'noparse' => true];
+      default:
+        return self::createImgElement($attribs);
+    }
   }
 
   private static function extractParserFunctionOptions(array $options): array {
